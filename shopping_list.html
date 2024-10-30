@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+-<html>
+    <head>
+        <script>
+            async function list_retrieve(){
+                url = 'https://lkk4vmvx-8000.aue.devtunnels.ms/retrieve'
+                try{
+                    const list_obj = await fetch(url);
+                    const json = await list_obj.json();
+                    console.log(json)
+                    parse_to_page(json)
+                }
+                catch(err){
+                    error = document.createElement("p")
+                    err_window = document.createElement("div")
+                    error_text = document.createTextNode(err.message)
+                    error.appendChild(error_text)
+
+                    error.setAttribute("id", "connect_error")
+                    err_window.setAttribute("id", "err_window")
+
+                    err_window.appendChild(error)
+                    document.body.appendChild(err_window)
+                }
+            }
+
+            function init_empty_list(){
+                const parent_div = document.getElementById("list")
+
+                empty_item = document.createElement("p")
+                empty_item.setAttribute("id", "empty_list")
+                empty_node = document.createTextNode("List is empty")
+
+                empty_item.appendChild(empty_node)
+
+                parent_div.appendChild(empty_item)
+            }
+
+            function parse_to_page(json) {
+                const my_list = JSON.parse(json);
+                if (Object.keys(my_list).length == 0) {
+                    init_empty_list()
+                }
+                else {
+                    for (let i = 0; i<Object.keys(my_list).length;i++){
+                        const item_no = Object.keys(my_list)[i];
+                        const parent_div = document.getElementById("list")
+                        const child_div = document.createElement("div")
+                        child_div.setAttribute("id", item_no)
+                        child_div.setAttribute("class", "item")
+                        parent_div.appendChild(child_div)
+
+                        create_text_entry(child_div, my_list, item_no)
+                        create_buttons(child_div)
+                    }
+                }
+            }
+
+            function create_text_entry(parent_div, my_list, item_no){
+                const new_item_element = document.createElement("p")
+                const new_quant_element = document.createElement("p")
+                const new_note_element = document.createElement("p")
+
+                const new_item = document.createTextNode(item_no);
+                const new_quant = document.createTextNode(my_list[item_no].quantity);
+                const new_note = document.createTextNode(my_list[item_no].note);
+
+                new_item_element.appendChild(new_item);
+                new_quant_element.appendChild(new_quant);
+                if (new_note === ""){
+                    new_note_element.appendChild('---')
+                }
+                else{
+                    new_note_element.appendChild(new_note)
+                }
+
+                new_item_element.setAttribute("class","item_name")
+                new_quant_element.setAttribute("class","item_quantity")
+                new_note_element.setAttribute("class", "item_note")
+
+
+                parent_div.appendChild(new_item_element)
+                parent_div.appendChild(new_quant_element)
+                parent_div.appendChild(new_note_element)
+            }
+
+            function create_buttons(parent_div) {
+                const button_entry = document.createElement("div")
+
+                const new_add_button = document.createElement("button")
+                const new_take_button = document.createElement("button")
+                const new_delete_button = document.createElement("button")
+
+                new_add_button.innerHTML = "+"
+                new_take_button.innerHTML = "-"
+                new_delete_button.innerHTML = "X"
+
+                set_attributes(new_add_button, {"class":"add_button", "onclick":"increase_item('https://lkk4vmvx-8000.aue.devtunnels.ms/add_item/', this)"})
+                set_attributes(new_take_button, {"class":"take_button", "onclick":"decrease_item('https://lkk4vmvx-8000.aue.devtunnels.ms/remove_item/', this)"})
+                set_attributes(new_delete_button, {"class":"delete", "onclick":"delete_item('https://lkk4vmvx-8000.aue.devtunnels.ms/delete_item/', this)"})
+
+
+                button_entry.setAttribute("class", "buttons")
+
+                button_entry.appendChild(new_add_button)
+                button_entry.appendChild(new_take_button)
+
+                parent_div.appendChild(button_entry)
+                parent_div.appendChild(new_delete_button)
+            }
+
+
+            async function increase_item(url, obj){
+                const button_div = obj.parentNode;
+                const parent_div = button_div.parentNode.id;
+                const item_url = url+parent_div
+                await fetch(item_url, {method: 'PUT'})
+                button_div.parentNode.childNodes[1].innerHTML = parseInt(button_div.parentNode.childNodes[1].innerHTML)+1
+            }
+
+            async function decrease_item(url, obj){
+                const button_div = obj.parentNode;
+                const parent_div = button_div.parentNode.id;
+                const item_url = url+parent_div
+                console.log(item_url)
+                if (parseInt(button_div.parentNode.childNodes[1].innerHTML)-1 <1){
+                    remove_list_entry(button_div.parentNode)
+                }
+                else{
+                button_div.parentNode.childNodes[1].innerHTML = parseInt(button_div.parentNode.childNodes[1].innerHTML)-1
+                }
+                await fetch(item_url, {method: 'PUT'})
+            }
+
+            function remove_list_entry(obj){
+                obj.remove()
+                const parent_div = document.getElementById("list")
+                if (parent_div.childElementCount == 0){
+                    init_empty_list()
+                }
+            }
+
+            async function delete_item(url, obj){
+                console.log(obj.parentNode.id)
+                const parent_div = obj.parentNode.id;
+                const item_url = url+parent_div;
+                await fetch(item_url, {method:'DELETE'})
+                remove_list_entry(obj.parentNode)
+            }
+
+            function open_item_window() {
+                const background = document.createElement("div");
+                background.setAttribute("id", "opacity_plane")
+
+                const item_window = document.createElement("div")
+                item_window.setAttribute("id","item_add_window")
+
+                const item_headers = document.createElement("div")
+                item_headers.setAttribute("id", "add_item_headers")
+
+                item_header_name = document.createElement("h3")
+                item_header_quant = document.createElement("h3")
+                item_header_note = document.createElement("h3")
+
+                name_header_text = document.createTextNode("Name")
+                quant_header_text = document.createTextNode("Qty")
+                note_header_text = document.createTextNode("Notes")
+
+                item_header_name.appendChild(name_header_text)
+                item_header_quant.appendChild(quant_header_text)
+                item_header_note.appendChild(note_header_text)
+
+                item_headers.appendChild(item_header_name)
+                item_headers.appendChild(item_header_quant)
+                item_headers.appendChild(item_header_note)
+
+                const input_boxes = document.createElement("div")
+                input_boxes.setAttribute("id","input_boxes")
+                const input_name = document.createElement("input")
+                const input_quant = document.createElement("input")
+                const input_note = document.createElement("input")
+
+                set_attributes(input_name, {"id":"add_item_name", "placeholder":"Name", "maxlength":"25", "size":"15%"})
+                set_attributes(input_quant, {"id":"add_item_quantity", "placeholder":"Qnty", "maxlength":"2", "size":"1%"})
+                set_attributes(input_note, {"id":"add_item_note", "placeholder":"Additional notes", "maxlength":"25", "size": "15%"})
+
+                input_boxes.appendChild(input_name)
+                input_boxes.appendChild(input_quant)
+                input_boxes.appendChild(input_note)
+
+                const confirm_button = document.createElement("button")
+                const cancel_button = document.createElement("button")
+
+                set_attributes(confirm_button, {"id":"confirm_button", "onclick":"add_item(this)"})
+                set_attributes(cancel_button, {"id":"cancel_button", "onclick":"close_item_window(this)"})
+
+                confirm_button.innerHTML = "Add item";
+                cancel_button.innerHTML = "Cancel"
+
+                item_window.appendChild(confirm_button)
+                item_window.appendChild(cancel_button)
+                item_window.appendChild(input_boxes)
+
+                item_window.appendChild(item_headers)
+
+                document.body.appendChild(item_window)
+                document.body.appendChild(background)
+            }
+
+            function set_attributes(obj, options){
+                Object.keys(options).forEach(function(attr) {
+                    obj.setAttribute(attr, options[attr]);
+                })
+
+            }
+
+            async function add_item(obj){
+                item = document.getElementById("add_item_name").value
+                quantity = document.getElementById("add_item_quantity").value
+                note = document.getElementById("add_item_note").value
+
+                if (item == "" || quantity == ""){
+                    err = new Error('Please enter both a name and quantity')
+                    alert(err)
+                    throw err
+                }
+                if (note ==""){
+                    note = "empty"
+                }
+                url = `https://lkk4vmvx-8000.aue.devtunnels.ms/new_item/item=${item}+qty=${quantity}+note=${note}`
+
+
+                try{
+                    await fetch(url, {method:"POST"})
+                    list_div = document.getElementById("list")
+                    while (list_div.firstChild){
+                        list_div.removeChild(list_div.firstChild);
+                    }
+                    close_item_window(obj)
+                    await list_retrieve()
+                }
+                catch(err){
+                    alert(err.message)
+                    console.log(err.message)
+                }
+            }
+
+            function close_item_window(obj){
+                outer_div = obj.parentNode;
+                outer_div.remove()
+                document.getElementById("opacity_plane").remove()
+            }
+
+        </script>
+            <style>
+            body {
+                background-color: black;
+            }
+
+            #err_window{
+                position:absolute;
+                background-color: grey;
+                height:10%;
+                width:15%;
+                top:37%;
+                left:38.75%;
+                z-index:2;
+            }
+
+            #connect_error{
+                position:relative;
+                color: black;
+                position:relative;
+                font-size: 22px;
+                left:21%
+            }
+
+            #headers{
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                width:95%;
+                font-size: 26px;
+                border:1px solid grey;
+                padding: 0 14px;
+                color: white;
+            }
+
+            #empty_list {
+                color: white;
+                position:relative;
+                left:43.6%
+            }
+
+            .item {
+                display:flex;
+                flex-direction: row;
+                position: relative;
+                font-size: 18px;
+                width:95%;
+                height:55px;
+                border: 1px solid lightgray;
+                padding: 0 14px;
+                justify-content: center;
+            }
+
+            .item_name {
+                position:absolute;
+                left:5%;
+                color: white;
+            }
+
+            .item_quantity {
+                position: absolute;
+                left:45%;
+                color: white;
+            }
+
+            .item_note {
+                position: absolute;
+                left:85%;
+                color: white;
+            }
+
+            .add_button {
+                background-color: lightgray;
+                border:none;
+                width: 20px;
+                height: 20px;
+                transition-duration: 0.2s;
+                text-align: center;
+            }
+
+            .add_button:hover {
+                background-color: grey;
+            }
+
+            .take_button {
+                background-color: lightgray;
+                border:none;
+                width: 20px;
+                height: 20px;
+                transition-duration: 0.2s;
+                text-align: center;
+            }
+
+            .take_button:hover {
+                background-color: grey;
+            }
+            
+            .buttons {
+                position:absolute;
+                left: 50%;
+                display: inline;
+                justify-content: center;
+                top:15px;
+            }
+
+            .delete {
+                background-color: darkgray;
+                display: inline;
+                border: 2px;
+                width: 20px;
+                height: 20px;
+                transition-duration: 0.2s;
+                text-align: center;
+                position: absolute;
+                left: 70%;
+                top:17px;
+            }
+
+            .delete:hover {
+                background-color: red;
+            }
+
+            #item_add_window {
+                position: fixed;
+                top:37.5%;
+                left:30%;
+                width:35%;
+                height:25%;
+                z-index: 3;
+                justify-content: center;
+                background-color: rgb(218, 218, 218);
+            }
+
+            #opacity_plane {
+                position: fixed;
+                width:100%;
+                height:100%;
+                top:0;
+                left:0;
+                background-color: rgba(0,0,0,0.625);
+                z-index: 2;
+            }
+
+            #item_add_button {
+                position: absolute;
+                right: 50%;
+                padding: 10px;
+                margin: 5px;
+
+            }
+
+            #input_boxes {
+                position: relative;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+                top:75px;
+            }
+
+            #confirm_button {
+                position: relative;
+                top:80%;
+                left:25%;
+            }
+
+            #cancel_button {
+                position: relative;
+                top: 80%;
+                left:50%
+            }
+
+            #add_item_headers {
+                position:relative;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+            }
+        </style>
+    </head>
+    <body onload="list_retrieve()">
+        <h1>
+            Shopping List
+        </h1>
+        <div id = 'headers'>
+            <h2>
+                Item
+            </h2>
+            <h2>
+                Quantity / Weight
+            </h2>
+            <h3>
+                Additional Notes
+            </h3>
+        </div>
+        <div id="list">
+        </div>
+        <button id="item_add_button" onclick="open_item_window()">Add new item</button>
+    </body>
+</html>
