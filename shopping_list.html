@@ -62,7 +62,21 @@
                 const new_note_element = document.createElement("p")
 
                 const new_item = document.createTextNode(item_no);
-                const new_quant = document.createTextNode(my_list[item_no].quantity+"/"+my_list[item_no].weight);
+                if (my_list[item_no].quantity == 0){
+                    quantity = "---"
+                }
+                else {
+                    quantity = my_list[item_no].quantity
+                }
+
+                if (my_list[item_no].weight == 0){
+                    weight = "---"
+                }
+                else {
+                    weight = my_list[item_no].weight
+                }
+
+                const new_quant = document.createTextNode(quantity+"/"+weight);
                 const new_note = document.createTextNode(my_list[item_no].note);
 
                 new_item_element.appendChild(new_item);
